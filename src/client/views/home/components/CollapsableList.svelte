@@ -10,6 +10,9 @@
     border: none;
     background: transparent;
   }
+  button:focus {
+    outline: none;
+  }
 
   ul {
     padding: 0 0 1em 1.5em;
