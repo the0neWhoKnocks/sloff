@@ -15,8 +15,12 @@
   }
 
   ul {
-    padding: 0 0 1em 1.5em;
+    padding: 0 0 1em 1.2em;
     margin: 0;
+  }
+  
+  .arrow {
+    display: inline-block;
   }
 </style>
 
@@ -30,7 +34,10 @@
 </script>
 
 <button on:click={toggle}>
-  {#if open}&#x25BE;{:else}&#x25B8;{/if} {label}
+  <span class="arrow">
+    {#if open}&#x25BE;{:else}&#x25B8;{/if}
+  </span>
+  {label}
 </button>
 <ul
   class="collapsable-list"
