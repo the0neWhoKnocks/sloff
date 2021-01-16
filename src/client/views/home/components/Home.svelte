@@ -2,6 +2,7 @@
   :root {
     --color1: #332733;
     --color2: #4a334a;
+    --color2Trans: rgba(74, 51, 74, 0.15);
     --transLightBorder: solid 1px rgba(255, 255, 255, 0.25);
     --transDarkBorder: solid 1px rgba(0, 0, 0, 0.1);
   }
@@ -41,7 +42,7 @@
     flex-shrink: 0;
   }
   .workspaces button {
-    border: solid 4px black;
+    border: solid 4px var(--color2);
     border-radius: 0.5em;
     margin: 0.5em;
     background: #fff;
@@ -54,7 +55,7 @@
     background: transparent;
   }
   .workspaces button.current {
-    box-shadow: 0 0 0 3px #fff;
+    box-shadow: 0 0 0 2px #fff;
   }
   
   .workspace__nav {
@@ -99,11 +100,24 @@
     padding: 1em 1.5em;
     border-bottom: var(--transDarkBorder);
     flex-shrink: 0;
+    display: flex;
+    align-items: center;
+  }
+  .room-name {
+    width: 100%;
+  }
+  .number-of-users {
+    flex-shrink: 0;
   }
 
   .comments {
     height: 100%;
     padding: 1.5em;
+  }
+  
+  :global(.comment .svg-icon) {
+    color: var(--color2);
+    background-color: var(--color2Trans);
   }
 
   .comment-creator {
@@ -117,6 +131,9 @@
     width: 100%;
     padding: 1em;
     border: none;
+  }
+  .comment-creator input:focus {
+    outline: none;
   }
 
   .wysiwyg {
@@ -134,6 +151,15 @@
   .wysiwyg button:hover {
     background:rgba(0, 0, 0, 0.05);
   }
+  .wysiwyg button:focus {
+    outline: none;
+  }
+  .wysiwyg button.strikethrough {
+    text-decoration: line-through;
+  }
+  .wysiwyg button.link {
+    transform: rotate(90deg);
+  }
 
   /* 
   @media (max-width: 849px) {
@@ -150,6 +176,7 @@
 <script>
   // import Modal from '../../components/Modal.svelte';
   import CollapsableList from './CollapsableList.svelte';
+  import Comment from './Comment.svelte';
   
   const workspaces = [
     { label: '01', current: true },
@@ -165,6 +192,21 @@
   ];
   const apps = [
     { name: 'Outlook Calendar' },
+  ];
+  const comments = [
+    {
+      avatar: 'http://2.gravatar.com/avatar/84efbb7993402e39c9f04d9da361fc6f',
+      content: 'A question',
+      time: '12:45 PM',
+      uid: 1,
+      username: 'Nox',
+    },
+    {
+      content: 'An answer',
+      time: '12:50 PM',
+      uid: 2,
+      username: 'Pinky',
+    },
   ];
 </script>
 
@@ -213,32 +255,26 @@
     </div>
     <div class="comments-section">
       <div class="comments-bar">
-        <div>Room Name</div>
-        <div># of users in room</div>
+        <div class="room-name">Room Name</div>
+        <div class="number-of-users"># of users in room</div>
       </div>
       <div class="comments">
-        <div class="comment">
-          <img src="" alt="avatar" />
-          <div>
-            User Name | time of comment
-          </div>
-          <div>
-            Comment
-          </div>
-        </div>
+        {#each comments as { avatar, content, time, username }}
+          <Comment {avatar} {content} {time} {username} />
+        {/each}
       </div>
       <div class="comment-creator">
         <input type="text" />
         <nav class="wysiwyg">
           <button title="Bold">B</button>
           <button title="Italic">I</button>
-          <button title="Strikethrough">S</button>
+          <button title="Strikethrough" class="strikethrough">S</button>
           <button title="Code">&lt;/&gt;</button>
-          <button title="Link">8</button>
+          <button title="Link" class="link">8</button>
           <button title="Ordered List">1 -</button>
           <button title="Bulleted List">. -</button>
           <button title="Blockquote">| -</button>
-          <button title="Code Block">&lt;/&gt; []</button>
+          <button title="Code Block">[&lt;/&gt;]</button>
         </nav>
       </div>
     </div>
