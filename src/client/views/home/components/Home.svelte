@@ -77,15 +77,33 @@
     overflow-y: auto;
   }
   .cl-item {
+    width: 100%;
     color: rgba(255, 255, 255, 0.75);
+    text-align: left;
     border: none;
     background: transparent;
+    position: relative;
   }
   .cl-item.for--add-app span {
     padding: 0.1em 0.4em;
     margin-right: 0.25em;
     background: rgba(255, 255, 255, 0.25);
     display: inline-block;
+  }
+  .cl-item.is--user:not(.online) {
+    opacity: 0.5;
+  }
+  .cl-item.is--user.online::before {
+    content: '';
+    width: 0.65em;
+    height: 0.65em;
+    border-radius: 100%;
+    box-shadow: 0 0 10px 5px green;
+    background: #4dff4d;
+    position: absolute;
+    top: 50%;
+    right: 99%;
+    transform: translateY(-50%);
   }
   
   .comments-section {
@@ -237,7 +255,7 @@
           <CollapsableList label="Direct Messages">
             {#each DMs as { username, online }}
               <button
-                class="cl-item"
+                class="cl-item is--user"
                 class:online
               >{username}</button>
             {/each}
