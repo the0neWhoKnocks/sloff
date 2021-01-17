@@ -15,6 +15,7 @@
     border-radius: 0.5em;
     outline: none;
     background: transparent;
+    flex-shrink: 0;
   }
   .avatar img {
     width: 100%;
