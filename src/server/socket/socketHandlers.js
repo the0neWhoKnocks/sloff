@@ -3,11 +3,16 @@ const logHeartbeat = require('../../utils/logger')('socket:socketHandlers:heartb
 
 module.exports = function connection(socket, serverSocket) {
   const {
+    WS__MSG_TYPE__COMMENT_POSTED,
+    WS__MSG_TYPE__CREATE_USER,
+    WS__MSG_TYPE__GET_COMMENTS,
+    WS__MSG_TYPE__GOT_COMMENTS,
     WS__MSG_TYPE__PING,
     WS__MSG_TYPE__PONG,
+    WS__MSG_TYPE__POST_COMMENT,
+    WS__MSG_TYPE__USER_CREATED,
   } = require('../../constants');
-  // const setUserState = require('../gameActions/setUserState')(serverSocket);
-
+  
   socket.on('message', (payload) => {
     const { data, type } = JSON.parse(payload);
     const _log = (type === WS__MSG_TYPE__PING) ? logHeartbeat : log;
@@ -19,7 +24,22 @@ module.exports = function connection(socket, serverSocket) {
         serverSocket.emitToSelf(WS__MSG_TYPE__PONG);
         break;
       }
-      // case WS__MSG_TYPE__SET_ADMIN: setUserState(data, 'admin'); break;
+      case WS__MSG_TYPE__CREATE_USER: {
+        const user = serverSocket.createUser();
+        serverSocket.emitToSelf(WS__MSG_TYPE__USER_CREATED, user);
+        break;
+      }
+      case WS__MSG_TYPE__GET_COMMENTS: {
+        const comments = serverSocket.getCommentsForRoom();
+        serverSocket.emitToSelf(WS__MSG_TYPE__GOT_COMMENTS, comments);
+        break;
+      }
+      case WS__MSG_TYPE__POST_COMMENT: {
+        const comment = serverSocket.postCommentToRoom(data);
+        // TODO - should use `emitToAllInRoom`
+        serverSocket.emitToAll(WS__MSG_TYPE__COMMENT_POSTED, comment);
+        break;
+      }
       default: {
         log(`[WARN] Message type "${type}" is not valid, no action taken data:`, data);
       }

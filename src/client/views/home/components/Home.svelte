@@ -22,6 +22,7 @@
   
   .app-body {
     height: 100%;
+    overflow: hidden;
     display: flex;
   }
   
@@ -131,52 +132,12 @@
   .comments {
     height: 100%;
     padding: 1.5em;
+    overflow: auto;
   }
   
   :global(.comment .svg-icon) {
     color: var(--color2);
     background-color: var(--color2Trans);
-  }
-
-  .comment-creator {
-    overflow: hidden;
-    border: solid 1px;
-    border-radius: 0.5em;
-    margin: 1.5em;
-    flex-shrink: 0;
-  }
-  .comment-creator input {
-    width: 100%;
-    padding: 1em;
-    border: none;
-  }
-  .comment-creator input:focus {
-    outline: none;
-  }
-
-  .wysiwyg {
-    padding: 0.25em;
-    border-top: var(--transDarkBorder);
-    border-width: 2px;
-    background: #eee;
-    display: flex;
-  }
-  .wysiwyg button {
-    padding: 0.5em 0.75em;
-    border: none;
-    margin: 0.25em;
-  }
-  .wysiwyg button:hover {
-    background:rgba(0, 0, 0, 0.05);
-  }
-  .wysiwyg button:focus {
-    outline: none;
-  }
-  .wysiwyg button.strikethrough {
-    text-decoration: line-through;
-  }
-  .wysiwyg button.link {
-    transform: rotate(90deg);
   }
 
   /* 
@@ -192,9 +153,18 @@
 </style>
 
 <script>
-  // import Modal from '../../components/Modal.svelte';
+  import { onMount, tick } from 'svelte';
+  import {
+    WS__MSG_TYPE__COMMENT_POSTED,
+    WS__MSG_TYPE__CREATE_USER,
+    WS__MSG_TYPE__GET_COMMENTS,
+    WS__MSG_TYPE__GOT_COMMENTS,
+    WS__MSG_TYPE__USER_CREATED,
+  } from '../../../../constants';
+  import { comments, currUser } from '../../../store';
   import CollapsableList from './CollapsableList.svelte';
   import Comment from './Comment.svelte';
+  import CommentCreator from './CommentCreator.svelte';
   
   const workspaces = [
     { label: '01', current: true },
@@ -205,27 +175,38 @@
     { label: 'Private channel', public: false },
   ];
   const DMs = [
-    { username: 'John Doe', online: true },
+    { username: 'slackbot', online: true },
+    { username: '[User] (you)', online: true },
+    { username: 'John Doe', online: false },
     { username: 'Jane Doe', online: false },
   ];
   const apps = [
     { name: 'Outlook Calendar' },
   ];
-  const comments = [
-    {
-      avatar: 'http://2.gravatar.com/avatar/84efbb7993402e39c9f04d9da361fc6f',
-      content: 'A question',
-      time: '12:45 PM',
-      uid: 1,
-      username: 'Nox',
-    },
-    {
-      content: 'An answer',
-      time: '12:50 PM',
-      uid: 2,
-      username: 'Pinky',
-    },
-  ];
+  let commentsEl;
+  
+  onMount(() => {
+    window.clientSocket.on(WS__MSG_TYPE__GOT_COMMENTS, async (data) => {
+      comments.update(c => [...c, ...data]);
+      
+      await tick();
+      commentsEl.scrollTop = commentsEl.scrollHeight;
+    });
+    window.clientSocket.on(WS__MSG_TYPE__USER_CREATED, (data) => {
+      DMs[1].username = `${data.username} (you)`;
+      currUser.update(user => ({ ...user, ...data }));
+      
+      window.clientSocket.emit(WS__MSG_TYPE__GET_COMMENTS);
+    });
+    window.clientSocket.on(WS__MSG_TYPE__COMMENT_POSTED, async (comment) => {
+      comments.update(c => [...c, comment]);
+      
+      await tick();
+      commentsEl.scrollTop = commentsEl.scrollHeight;
+    });
+    
+    window.clientSocket.emit(WS__MSG_TYPE__CREATE_USER);
+  });
 </script>
 
 <div class="wrapper">
@@ -276,25 +257,12 @@
         <div class="room-name">Room Name</div>
         <div class="number-of-users"># of users in room</div>
       </div>
-      <div class="comments">
-        {#each comments as { avatar, content, time, username }}
+      <div class="comments" bind:this={commentsEl}>
+        {#each $comments as { avatar, content, time, username }}
           <Comment {avatar} {content} {time} {username} />
         {/each}
       </div>
-      <div class="comment-creator">
-        <input type="text" />
-        <nav class="wysiwyg">
-          <button title="Bold">B</button>
-          <button title="Italic">I</button>
-          <button title="Strikethrough" class="strikethrough">S</button>
-          <button title="Code">&lt;/&gt;</button>
-          <button title="Link" class="link">8</button>
-          <button title="Ordered List">1 -</button>
-          <button title="Bulleted List">. -</button>
-          <button title="Blockquote">| -</button>
-          <button title="Code Block">[&lt;/&gt;]</button>
-        </nav>
-      </div>
+      <CommentCreator />
     </div>
   </div>
 </div>
