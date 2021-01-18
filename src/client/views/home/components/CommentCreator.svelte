@@ -1,32 +1,69 @@
 <script>
+  import { onMount } from 'svelte';
   import {
     WS__MSG_TYPE__COMMENT_POSTED,
+    WS__MSG_TYPE__COMMENT_UPDATED,
+    WS__MSG_TYPE__EDIT_COMMENT,
     WS__MSG_TYPE__POST_COMMENT,
+    WS__MSG_TYPE__UDPATE_COMMENT,
   } from '../../../../constants';
-  import { currUser } from '../../../store';
+  import { comments, currUser } from '../../../store';
   
   const KEY__ENTER = 13;
-  let inputField;
+  const KEY__UP = 38;
+  
+  export let cid = undefined;
+  export let content = '';
   
   function handleSubmit(ev) {
-    if (ev.keyCode === KEY__ENTER) {
-      window.clientSocket.on(WS__MSG_TYPE__COMMENT_POSTED, () => {
-        inputField.value = '';
-      });
-      
-      const comment = ev.currentTarget.value;
-      window.clientSocket.emit(WS__MSG_TYPE__POST_COMMENT, {
-        ...$currUser,
-        content: comment,
-      });
+    switch(ev.keyCode) {
+      case KEY__ENTER: {
+        const handleComment = () => { content = ''; }
+        
+        window.clientSocket.on(WS__MSG_TYPE__COMMENT_POSTED, handleComment);
+        window.clientSocket.on(WS__MSG_TYPE__COMMENT_UPDATED, handleComment);
+        
+        if (cid) {
+          // TODO - not a fan of this because it depends on external DOM structure
+          document.querySelector('.comments-section > .comment-creator textarea').focus();
+          window.clientSocket.emit(WS__MSG_TYPE__UDPATE_COMMENT, { cid, content });
+        }
+        else {
+          window.clientSocket.emit(WS__MSG_TYPE__POST_COMMENT, { ...$currUser, content });
+        }
+        
+        break;
+      }
+      case KEY__UP: {
+        // edit previous comment if there's no text in the creator
+        if (content === '') {
+          const lastComment = Array.from($comments).reverse().find(([_, { uid }]) => uid === $currUser.uid);
+          
+          if (lastComment) {
+            const [_, { cid }] = lastComment;
+            window.clientSocket.emit(WS__MSG_TYPE__EDIT_COMMENT, cid);
+          }
+        }
+        break;
+      }
     }
   }
+  
+  onMount(() => {
+    if (cid) {
+      // TODO - move this up to `Home`, and key off of data flowing in from
+      // events.
+      document.querySelector('.comment .comment-creator textarea').focus();
+      const commentsEl = document.querySelector('.comments');
+      commentsEl.scrollTop = commentsEl.scrollHeight;
+    }
+  });
 </script>
 
 <div class="comment-creator">
   <textarea
     on:keydown={handleSubmit}
-    bind:this={inputField}
+    bind:value={content}
   ></textarea>
   <nav class="wysiwyg">
     <button title="Bold">B</button>
@@ -43,14 +80,15 @@
 
 <style>
   .comment-creator {
+    font-size: 1rem;
     overflow: hidden;
     border: solid 1px;
     border-radius: 0.5em;
-    margin: 1.5em;
     flex-shrink: 0;
   }
   .comment-creator textarea {
     width: 100%;
+    height: 3.25em;
     font-family: Arial, Helvetica, sans-serif;
     font-size: 1em;
     padding: 1em;
