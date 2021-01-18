@@ -13,8 +13,10 @@ const users = new Map();
 const uids = [];
 const usernames = [];
 const DEFAULT_ROOM_ID = 1224;
-const comments = new Map();
-const mockComments = [
+const commentsDB = new Map();
+
+const mockRoomComments = new Map();
+[
   {
     avatar: 'http://2.gravatar.com/avatar/84efbb7993402e39c9f04d9da361fc6f',
     cid: 1,
@@ -30,7 +32,10 @@ const mockComments = [
     uid: 2,
     username: 'Pinky',
   },
-];
+].forEach(c => {
+  mockRoomComments.set(c.cid, c);
+});
+commentsDB.set(DEFAULT_ROOM_ID, mockRoomComments);
 
 // const rooms = new Map();
 // const disconnectChecksForRoom = new Map();
@@ -77,25 +82,45 @@ class ServerSocket {
   }
   
   getCommentsForRoom(roomID = DEFAULT_ROOM_ID) {
-    if(!comments.get(roomID)){
-      comments.set(roomID, mockComments);
-    }
-    
-    return comments.get(roomID);
+    return commentsDB.get(roomID);
   }
   
   postCommentToRoom(comment, roomID = DEFAULT_ROOM_ID) {
-    const _comments = comments.get(roomID);
+    const comments = commentsDB.get(roomID);
+    const cid = comments.size + 1;
     const updatedComment = {
       ...comment,
-      cid: _comments.length + 1,
+      cid,
       time: new Date().toLocaleTimeString('en-US', { hour: 'numeric', hour12: true, minute: 'numeric' }),
     };
-    const updatedComments = [..._comments, updatedComment];
-    
-    comments.set(roomID, updatedComments);
+    comments.set(cid, updatedComment);
     
     return updatedComment;
+  }
+  
+  editingComment(cid, roomID = DEFAULT_ROOM_ID) {
+    const comments = commentsDB.get(roomID);
+    const comment = comments.get(cid);
+    
+    if (comment) {
+      comment.editing = true;
+      comments.set(cid, comment);
+    }
+    
+    return comments;
+  }
+  
+  updateComment({ cid, content }, roomID = DEFAULT_ROOM_ID) {
+    const comments = commentsDB.get(roomID);
+    const comment = comments.get(cid);
+    
+    if (comment) {
+      comment.editing = false;
+      comment.content = content;
+      comments.set(cid, comment);
+    }
+    
+    return comments;
   }
   
   // createRoom(roomID, data = {}) {

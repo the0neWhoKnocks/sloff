@@ -102,9 +102,8 @@
     box-shadow: 0 0 10px 5px green;
     background: #4dff4d;
     position: absolute;
-    top: 50%;
+    top: 0.65em;
     right: 99%;
-    transform: translateY(-50%);
   }
   
   .comments-section {
@@ -139,6 +138,10 @@
     color: var(--color2);
     background-color: var(--color2Trans);
   }
+  
+  :global(.comments-section > .comment-creator) {
+    margin: 1.5em;
+  }
 
   /* 
   @media (max-width: 849px) {
@@ -156,7 +159,9 @@
   import { onMount, tick } from 'svelte';
   import {
     WS__MSG_TYPE__COMMENT_POSTED,
+    WS__MSG_TYPE__COMMENT_UPDATED,
     WS__MSG_TYPE__CREATE_USER,
+    WS__MSG_TYPE__EDITING_COMMENT,
     WS__MSG_TYPE__GET_COMMENTS,
     WS__MSG_TYPE__GOT_COMMENTS,
     WS__MSG_TYPE__USER_CREATED,
@@ -187,7 +192,8 @@
   
   onMount(() => {
     window.clientSocket.on(WS__MSG_TYPE__GOT_COMMENTS, async (data) => {
-      comments.update(c => [...c, ...data]);
+      const parsedComments = new Map(JSON.parse(data));
+      comments.set(parsedComments);
       
       await tick();
       commentsEl.scrollTop = commentsEl.scrollHeight;
@@ -199,10 +205,19 @@
       window.clientSocket.emit(WS__MSG_TYPE__GET_COMMENTS);
     });
     window.clientSocket.on(WS__MSG_TYPE__COMMENT_POSTED, async (comment) => {
-      comments.update(c => [...c, comment]);
+      $comments.set(comment.cid, comment);
+      comments.set($comments);
       
       await tick();
       commentsEl.scrollTop = commentsEl.scrollHeight;
+    });
+    window.clientSocket.on(WS__MSG_TYPE__EDITING_COMMENT, (data) => {
+      const parsedComments = new Map(JSON.parse(data));
+      comments.set(parsedComments);
+    });
+    window.clientSocket.on(WS__MSG_TYPE__COMMENT_UPDATED, (data) => {
+      const parsedComments = new Map(JSON.parse(data));
+      comments.set(parsedComments);
     });
     
     window.clientSocket.emit(WS__MSG_TYPE__CREATE_USER);
@@ -258,8 +273,8 @@
         <div class="number-of-users"># of users in room</div>
       </div>
       <div class="comments" bind:this={commentsEl}>
-        {#each $comments as { avatar, content, time, username }}
-          <Comment {avatar} {content} {time} {username} />
+        {#each [...$comments] as [key, comment]}
+          <Comment {...comment} />
         {/each}
       </div>
       <CommentCreator />

@@ -4,12 +4,16 @@ const logHeartbeat = require('../../utils/logger')('socket:socketHandlers:heartb
 module.exports = function connection(socket, serverSocket) {
   const {
     WS__MSG_TYPE__COMMENT_POSTED,
+    WS__MSG_TYPE__COMMENT_UPDATED,
     WS__MSG_TYPE__CREATE_USER,
+    WS__MSG_TYPE__EDIT_COMMENT,
+    WS__MSG_TYPE__EDITING_COMMENT,
     WS__MSG_TYPE__GET_COMMENTS,
     WS__MSG_TYPE__GOT_COMMENTS,
     WS__MSG_TYPE__PING,
     WS__MSG_TYPE__PONG,
     WS__MSG_TYPE__POST_COMMENT,
+    WS__MSG_TYPE__UDPATE_COMMENT,
     WS__MSG_TYPE__USER_CREATED,
   } = require('../../constants');
   
@@ -18,7 +22,10 @@ module.exports = function connection(socket, serverSocket) {
     const _log = (type === WS__MSG_TYPE__PING) ? logHeartbeat : log;
     
     _log(`[HANDLE] "${type}"`);
-
+    
+    // TODO - instances of `emitToAll` should use `emitToAllInRoom` once an
+    // actual room/channel system is fleshed out.
+    
     switch (type) {
       case WS__MSG_TYPE__PING: {
         serverSocket.emitToSelf(WS__MSG_TYPE__PONG);
@@ -29,15 +36,24 @@ module.exports = function connection(socket, serverSocket) {
         serverSocket.emitToSelf(WS__MSG_TYPE__USER_CREATED, user);
         break;
       }
+      case WS__MSG_TYPE__EDIT_COMMENT: {
+        const comments = serverSocket.editingComment(data);
+        serverSocket.emitToAll(WS__MSG_TYPE__EDITING_COMMENT, JSON.stringify(Array.from(comments)));
+        break;
+      }
       case WS__MSG_TYPE__GET_COMMENTS: {
         const comments = serverSocket.getCommentsForRoom();
-        serverSocket.emitToSelf(WS__MSG_TYPE__GOT_COMMENTS, comments);
+        serverSocket.emitToSelf(WS__MSG_TYPE__GOT_COMMENTS, JSON.stringify(Array.from(comments)));
         break;
       }
       case WS__MSG_TYPE__POST_COMMENT: {
         const comment = serverSocket.postCommentToRoom(data);
-        // TODO - should use `emitToAllInRoom`
         serverSocket.emitToAll(WS__MSG_TYPE__COMMENT_POSTED, comment);
+        break;
+      }
+      case WS__MSG_TYPE__UDPATE_COMMENT: {
+        const comments = serverSocket.updateComment(data);
+        serverSocket.emitToAll(WS__MSG_TYPE__COMMENT_UPDATED, JSON.stringify(Array.from(comments)));
         break;
       }
       default: {
