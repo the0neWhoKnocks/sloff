@@ -3,16 +3,17 @@
   import {
     WS__MSG_TYPE__COMMENT_POSTED,
     WS__MSG_TYPE__COMMENT_UPDATED,
-    WS__MSG_TYPE__CREATE_USER,
     WS__MSG_TYPE__EDITING_COMMENT,
     WS__MSG_TYPE__GET_COMMENTS,
     WS__MSG_TYPE__GOT_COMMENTS,
-    WS__MSG_TYPE__USER_CREATED,
   } from '../../../../constants';
   import { comments, currUser } from '../../../store';
   import CollapsableList from './CollapsableList.svelte';
   import Comment from './Comment.svelte';
   import CommentCreator from './CommentCreator.svelte';
+  import UserMenu from './UserMenu.svelte';
+  
+  export let userData = undefined;
   
   const workspaces = [
     { label: '01', current: true },
@@ -24,7 +25,7 @@
   ];
   const DMs = [
     { username: 'slackbot', online: true },
-    { username: '[User] (you)', online: true },
+    { username: `${userData.username} (you)`, online: true },
     { username: 'John Doe', online: false },
     { username: 'Jane Doe', online: false },
   ];
@@ -48,18 +49,14 @@
   }
   
   onMount(() => {
+    currUser.update(user => ({ ...user, ...userData }));
+    
     window.clientSocket.on(WS__MSG_TYPE__GOT_COMMENTS, async (data) => {
       const parsedComments = new Map(JSON.parse(data));
       comments.set(parsedComments);
       
       await tick();
       commentsEl.scrollTop = commentsEl.scrollHeight;
-    });
-    window.clientSocket.on(WS__MSG_TYPE__USER_CREATED, (data) => {
-      DMs[1].username = `${data.username} (you)`;
-      currUser.update(user => ({ ...user, ...data }));
-      
-      window.clientSocket.emit(WS__MSG_TYPE__GET_COMMENTS);
     });
     window.clientSocket.on(WS__MSG_TYPE__COMMENT_POSTED, async (comment) => {
       $comments.set(comment.cid, comment);
@@ -77,12 +74,14 @@
       comments.set(parsedComments);
     });
     
-    window.clientSocket.emit(WS__MSG_TYPE__CREATE_USER);
+    window.clientSocket.emit(WS__MSG_TYPE__GET_COMMENTS);
   });
 </script>
 
 <div class="wrapper">
-  <nav class="app-nav"></nav>
+  <nav class="app-nav">
+    <UserMenu />
+  </nav>
   <div class="app-body">
     <div class="side-bar">
       <nav class="workspaces">
@@ -163,6 +162,10 @@
     height: 2em;
     background-color: var(--color1);
     flex-shrink: 0;
+    display: flex;
+    justify-content: flex-end;
+    position: relative;
+    z-index: 1;
   }
   
   .app-body {

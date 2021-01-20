@@ -19,6 +19,7 @@ module.exports = {
   entry: {
     'css/global': resolve(__dirname, './src/client/global.styl'),
     'js/home': resolve(__dirname, './src/client/views/home'),
+    'js/login': resolve(__dirname, './src/client/views/login'),
   },
   mode,
   module: {
