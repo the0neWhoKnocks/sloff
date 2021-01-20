@@ -6,6 +6,7 @@ module.exports = {
   // ERROR_CODE__NAME_TAKEN: 101,
   LOGGER__NAMESPACE: 'sloff',
   SERVER__PORT: +process.env.SERVER_PORT || 3000,
+  STORAGE_KEY: 'sloff',
   WS__CLOSE_CODE__USER_REMOVED: 4000, // Close event numbers https://developer.mozilla.org/en-US/docs/Web/API/CloseEvent
   WS__MSG_TYPE__COMMENT_POSTED: 'comment posted',
   WS__MSG_TYPE__COMMENT_UPDATED: 'comment updated',
