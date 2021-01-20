@@ -1,11 +1,3 @@
-<style>
-  .svg-icon {
-    width: 100%;
-    height: 100%;
-    fill: currentColor;
-  }
-</style>
-
 <script>
   export let icon = undefined;
 </script>
@@ -16,3 +8,11 @@
     xlink:href={`#ui-icon__${icon}`}
   ></use>
 </svg>
+
+<style>
+  .svg-icon {
+    width: 100%;
+    height: 100%;
+    fill: currentColor;
+  }
+</style>

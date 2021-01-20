@@ -7,6 +7,8 @@
   export let cid = undefined;
   export let content = undefined;
   export let editing = false;
+  export let onEditorMount = undefined;
+  export let onEditorUnMount = undefined;
   export let time = undefined;
   export let uid = undefined;
   export let username = undefined;
@@ -26,7 +28,12 @@
       <span class="time">{time}</span>
     </div>
     {#if editing && uid === $currUser.uid}
-      <CommentCreator {cid} {content} />
+      <CommentCreator
+        {cid}
+        {content}
+        onMount={onEditorMount}
+        onUnMount={onEditorUnMount}
+      />
     {:else}
       <div
         class="content"
@@ -77,8 +84,7 @@
     font-weight: bold;
     padding-bottom: 0.5em;
   }
-  .username {
-  }
+
   .time {
     font-size: 0.7em;
     opacity: 0.4;
