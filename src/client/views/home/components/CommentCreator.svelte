@@ -1,5 +1,8 @@
 <script>
-  import { onMount } from 'svelte';
+  import {
+    onMount as svelteOnMount,
+    onDestroy,
+  } from 'svelte';
   import {
     WS__MSG_TYPE__COMMENT_POSTED,
     WS__MSG_TYPE__COMMENT_UPDATED,
@@ -11,9 +14,12 @@
   
   const KEY__ENTER = 13;
   const KEY__UP = 38;
+  let inputEl;
   
   export let cid = undefined;
   export let content = '';
+  export let onMount = undefined;
+  export let onUnMount = undefined;
   
   function handleSubmit(ev) {
     switch(ev.keyCode) {
@@ -24,8 +30,6 @@
         window.clientSocket.on(WS__MSG_TYPE__COMMENT_UPDATED, handleComment);
         
         if (cid) {
-          // TODO - not a fan of this because it depends on external DOM structure
-          document.querySelector('.comments-section > .comment-creator textarea').focus();
           window.clientSocket.emit(WS__MSG_TYPE__UDPATE_COMMENT, { cid, content });
         }
         else {
@@ -37,10 +41,10 @@
       case KEY__UP: {
         // edit previous comment if there's no text in the creator
         if (content === '') {
-          const lastComment = Array.from($comments).reverse().find(([_, { uid }]) => uid === $currUser.uid);
+          const lastComment = Array.from($comments).reverse().find(([, { uid }]) => uid === $currUser.uid);
           
           if (lastComment) {
-            const [_, { cid }] = lastComment;
+            const [, { cid }] = lastComment;
             window.clientSocket.emit(WS__MSG_TYPE__EDIT_COMMENT, cid);
           }
         }
@@ -49,14 +53,12 @@
     }
   }
   
-  onMount(() => {
-    if (cid) {
-      // TODO - move this up to `Home`, and key off of data flowing in from
-      // events.
-      document.querySelector('.comment .comment-creator textarea').focus();
-      const commentsEl = document.querySelector('.comments');
-      commentsEl.scrollTop = commentsEl.scrollHeight;
-    }
+  svelteOnMount(() => {
+    if (onMount) onMount(inputEl);
+  });
+  
+  onDestroy(() => {
+    if (onUnMount) onUnMount();
   });
 </script>
 
@@ -64,6 +66,7 @@
   <textarea
     on:keydown={handleSubmit}
     bind:value={content}
+    bind:this={inputEl}
   ></textarea>
   <nav class="wysiwyg">
     <button title="Bold">B</button>

@@ -1,3 +1,25 @@
+<script>
+  export let label = undefined;
+  export let open = true;
+
+  function toggle() {
+    open = !open;
+  }
+</script>
+
+<button on:click={toggle}>
+  <span class="arrow">
+    {#if open}&#x25BE;{:else}&#x25B8;{/if}
+  </span>
+  {label}
+</button>
+<ul
+  class="collapsable-list"
+  class:open
+>
+  <slot></slot>
+</ul>
+
 <style>
   .collapsable-list:not(.open) {
     display: none;
@@ -23,25 +45,3 @@
     display: inline-block;
   }
 </style>
-
-<script>
-  export let label = undefined;
-  export let open = true;
-
-  function toggle() {
-    open = !open;
-  }
-</script>
-
-<button on:click={toggle}>
-  <span class="arrow">
-    {#if open}&#x25BE;{:else}&#x25B8;{/if}
-  </span>
-  {label}
-</button>
-<ul
-  class="collapsable-list"
-  class:open
->
-  <slot></slot>
-</ul>

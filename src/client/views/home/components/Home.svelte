@@ -1,3 +1,148 @@
+<script>
+  import { onMount, tick } from 'svelte';
+  import {
+    WS__MSG_TYPE__COMMENT_POSTED,
+    WS__MSG_TYPE__COMMENT_UPDATED,
+    WS__MSG_TYPE__CREATE_USER,
+    WS__MSG_TYPE__EDITING_COMMENT,
+    WS__MSG_TYPE__GET_COMMENTS,
+    WS__MSG_TYPE__GOT_COMMENTS,
+    WS__MSG_TYPE__USER_CREATED,
+  } from '../../../../constants';
+  import { comments, currUser } from '../../../store';
+  import CollapsableList from './CollapsableList.svelte';
+  import Comment from './Comment.svelte';
+  import CommentCreator from './CommentCreator.svelte';
+  
+  const workspaces = [
+    { label: '01', current: true },
+    { label: '02' },
+  ];
+  const channels = [
+    { label: 'Public channel', public: true },
+    { label: 'Private channel', public: false },
+  ];
+  const DMs = [
+    { username: 'slackbot', online: true },
+    { username: '[User] (you)', online: true },
+    { username: 'John Doe', online: false },
+    { username: 'Jane Doe', online: false },
+  ];
+  const apps = [
+    { name: 'Outlook Calendar' },
+  ];
+  let commentsEl;
+  let mainEditorEl;
+  
+  function handleCommentEditorMount(input) {
+    input.focus();
+    commentsEl.scrollTop = commentsEl.scrollHeight;
+  }
+  
+  function handleCommentEditorUnMount() {
+    mainEditorEl.focus();
+  }
+  
+  function handleMainEditorMount(input) {
+    mainEditorEl = input;
+  }
+  
+  onMount(() => {
+    window.clientSocket.on(WS__MSG_TYPE__GOT_COMMENTS, async (data) => {
+      const parsedComments = new Map(JSON.parse(data));
+      comments.set(parsedComments);
+      
+      await tick();
+      commentsEl.scrollTop = commentsEl.scrollHeight;
+    });
+    window.clientSocket.on(WS__MSG_TYPE__USER_CREATED, (data) => {
+      DMs[1].username = `${data.username} (you)`;
+      currUser.update(user => ({ ...user, ...data }));
+      
+      window.clientSocket.emit(WS__MSG_TYPE__GET_COMMENTS);
+    });
+    window.clientSocket.on(WS__MSG_TYPE__COMMENT_POSTED, async (comment) => {
+      $comments.set(comment.cid, comment);
+      comments.set($comments);
+      
+      await tick();
+      commentsEl.scrollTop = commentsEl.scrollHeight;
+    });
+    window.clientSocket.on(WS__MSG_TYPE__EDITING_COMMENT, (data) => {
+      const parsedComments = new Map(JSON.parse(data));
+      comments.set(parsedComments);
+    });
+    window.clientSocket.on(WS__MSG_TYPE__COMMENT_UPDATED, (data) => {
+      const parsedComments = new Map(JSON.parse(data));
+      comments.set(parsedComments);
+    });
+    
+    window.clientSocket.emit(WS__MSG_TYPE__CREATE_USER);
+  });
+</script>
+
+<div class="wrapper">
+  <nav class="app-nav"></nav>
+  <div class="app-body">
+    <div class="side-bar">
+      <nav class="workspaces">
+        {#each workspaces as { current, label }}
+          <button class:current={current}>{label}</button>
+        {/each}
+        <!-- workspace buttons, + button to add workspace -->
+        <button class="is--add">+</button>
+      </nav>
+      <nav class="workspace__nav">
+        <div class="workspace__bar">
+          Workspace Title
+        </div>
+        <div class="workspace__sections">
+          <CollapsableList label="Channels">
+            {#each channels as { label, public: _public }}
+              <button
+                class="cl-item"
+                class:public={_public}
+              >{label}</button>
+            {/each}
+          </CollapsableList>
+          <CollapsableList label="Direct Messages">
+            {#each DMs as { username, online }}
+              <button
+                class="cl-item is--user"
+                class:online
+              >{username}</button>
+            {/each}
+          </CollapsableList>
+          <CollapsableList label="Apps">
+            {#each apps as { name }}
+              <button
+                class="cl-item"
+              >{name}</button>
+            {/each}
+            <button class="cl-item for--add-app"><span>+</span> Add Apps</button>
+          </CollapsableList>
+        </div>
+      </nav>
+    </div>
+    <div class="comments-section">
+      <div class="comments-bar">
+        <div class="room-name">Room Name</div>
+        <div class="number-of-users"># of users in room</div>
+      </div>
+      <div class="comments" bind:this={commentsEl}>
+        {#each [...$comments] as [, comment]}
+          <Comment
+            {...comment}
+            onEditorMount={handleCommentEditorMount}
+            onEditorUnMount={handleCommentEditorUnMount}
+          />
+        {/each}
+      </div>
+      <CommentCreator onMount={handleMainEditorMount} />
+    </div>
+  </div>
+</div>
+
 <style>
   :root {
     --color1: #332733;
@@ -154,130 +299,3 @@
     }
   } */
 </style>
-
-<script>
-  import { onMount, tick } from 'svelte';
-  import {
-    WS__MSG_TYPE__COMMENT_POSTED,
-    WS__MSG_TYPE__COMMENT_UPDATED,
-    WS__MSG_TYPE__CREATE_USER,
-    WS__MSG_TYPE__EDITING_COMMENT,
-    WS__MSG_TYPE__GET_COMMENTS,
-    WS__MSG_TYPE__GOT_COMMENTS,
-    WS__MSG_TYPE__USER_CREATED,
-  } from '../../../../constants';
-  import { comments, currUser } from '../../../store';
-  import CollapsableList from './CollapsableList.svelte';
-  import Comment from './Comment.svelte';
-  import CommentCreator from './CommentCreator.svelte';
-  
-  const workspaces = [
-    { label: '01', current: true },
-    { label: '02' },
-  ];
-  const channels = [
-    { label: 'Public channel', public: true },
-    { label: 'Private channel', public: false },
-  ];
-  const DMs = [
-    { username: 'slackbot', online: true },
-    { username: '[User] (you)', online: true },
-    { username: 'John Doe', online: false },
-    { username: 'Jane Doe', online: false },
-  ];
-  const apps = [
-    { name: 'Outlook Calendar' },
-  ];
-  let commentsEl;
-  
-  onMount(() => {
-    window.clientSocket.on(WS__MSG_TYPE__GOT_COMMENTS, async (data) => {
-      const parsedComments = new Map(JSON.parse(data));
-      comments.set(parsedComments);
-      
-      await tick();
-      commentsEl.scrollTop = commentsEl.scrollHeight;
-    });
-    window.clientSocket.on(WS__MSG_TYPE__USER_CREATED, (data) => {
-      DMs[1].username = `${data.username} (you)`;
-      currUser.update(user => ({ ...user, ...data }));
-      
-      window.clientSocket.emit(WS__MSG_TYPE__GET_COMMENTS);
-    });
-    window.clientSocket.on(WS__MSG_TYPE__COMMENT_POSTED, async (comment) => {
-      $comments.set(comment.cid, comment);
-      comments.set($comments);
-      
-      await tick();
-      commentsEl.scrollTop = commentsEl.scrollHeight;
-    });
-    window.clientSocket.on(WS__MSG_TYPE__EDITING_COMMENT, (data) => {
-      const parsedComments = new Map(JSON.parse(data));
-      comments.set(parsedComments);
-    });
-    window.clientSocket.on(WS__MSG_TYPE__COMMENT_UPDATED, (data) => {
-      const parsedComments = new Map(JSON.parse(data));
-      comments.set(parsedComments);
-    });
-    
-    window.clientSocket.emit(WS__MSG_TYPE__CREATE_USER);
-  });
-</script>
-
-<div class="wrapper">
-  <nav class="app-nav"></nav>
-  <div class="app-body">
-    <div class="side-bar">
-      <nav class="workspaces">
-        {#each workspaces as { current, label }}
-          <button class:current={current}>{label}</button>
-        {/each}
-        <!-- workspace buttons, + button to add workspace -->
-        <button class="is--add">+</button>
-      </nav>
-      <nav class="workspace__nav">
-        <div class="workspace__bar">
-          Workspace Title
-        </div>
-        <div class="workspace__sections">
-          <CollapsableList label="Channels">
-            {#each channels as { label, public: _public }}
-              <button
-                class="cl-item"
-                class:public={_public}
-              >{label}</button>
-            {/each}
-          </CollapsableList>
-          <CollapsableList label="Direct Messages">
-            {#each DMs as { username, online }}
-              <button
-                class="cl-item is--user"
-                class:online
-              >{username}</button>
-            {/each}
-          </CollapsableList>
-          <CollapsableList label="Apps">
-            {#each apps as { name }}
-              <button
-                class="cl-item"
-              >{name}</button>
-            {/each}
-            <button class="cl-item for--add-app"><span>+</span> Add Apps</button>
-          </CollapsableList>
-        </div>
-      </nav>
-    </div>
-    <div class="comments-section">
-      <div class="comments-bar">
-        <div class="room-name">Room Name</div>
-        <div class="number-of-users"># of users in room</div>
-      </div>
-      <div class="comments" bind:this={commentsEl}>
-        {#each [...$comments] as [key, comment]}
-          <Comment {...comment} />
-        {/each}
-      </div>
-      <CommentCreator />
-    </div>
-  </div>
-</div>
