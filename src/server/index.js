@@ -1,7 +1,11 @@
 const compression = require('compression');
+const cookieParser = require('cookie-parser');
 const polka = require('polka');
 const sirv = require('sirv');
-const { SERVER__PORT } = require('../constants');
+const {
+  COOKIE,
+  SERVER__PORT,
+} = require('../constants');
 const log = require('../utils/logger')('server');
 const socket = require('./socket');
 const shell = require('./shell');
@@ -11,6 +15,7 @@ const dev = NODE_ENV !== 'production';
 const middleware = [
   compression({ threshold: 0 }),
   sirv('./dist/public', { dev, etag: true }),
+  cookieParser(),
 ];
 
 const { server } = polka()
@@ -26,7 +31,9 @@ const { server } = polka()
   //   else next();
   // })
   .get('/', (req, res) => {
-    res.end(shell({ view: 'home' }));
+    res.end(shell({
+      view: (req.cookies[COOKIE]) ? 'home' : 'login',
+    }));
   })
   .listen(SERVER__PORT, err => {
     if (err) log('Error', err);

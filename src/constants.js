@@ -1,5 +1,6 @@
 module.exports = {
   APP__TITLE: 'Sloff',
+  COOKIE: 'sloff',
   DISCONNECT_TIMEOUT: 5000,
   DOM__SVELTE_MOUNT_POINT: 'view',
   // ERROR_CODE__NAME_TAKEN: 101,
