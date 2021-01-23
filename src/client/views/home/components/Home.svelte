@@ -10,7 +10,7 @@
   import { comments, currUser } from '../../../store';
   import CollapsableList from './CollapsableList.svelte';
   import Comment from './Comment.svelte';
-  import CommentCreator from './CommentCreator.svelte';
+  import CommentEditor from './CommentEditor.svelte';
   import UserMenu from './UserMenu.svelte';
   
   export let userData = undefined;
@@ -137,7 +137,7 @@
           />
         {/each}
       </div>
-      <CommentCreator onMount={handleMainEditorMount} />
+      <CommentEditor onMount={handleMainEditorMount} />
     </div>
   </div>
 </div>
@@ -287,7 +287,7 @@
     background-color: var(--color2Trans);
   }
   
-  :global(.comments-section > .comment-creator) {
+  :global(.comments-section > .comment-editor) {
     margin: 1.5em;
   }
 

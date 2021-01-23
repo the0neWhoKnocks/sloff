@@ -1,6 +1,6 @@
 <script>
   import { currUser } from '../../../store';
-  import CommentCreator from './CommentCreator.svelte';
+  import CommentEditor from './CommentEditor.svelte';
   import SVGIcon from './SVGIcon.svelte';
 
   export let avatar = undefined;
@@ -28,7 +28,7 @@
       <span class="time">{time}</span>
     </div>
     {#if editing && uid === $currUser.uid}
-      <CommentCreator
+      <CommentEditor
         {cid}
         {content}
         onMount={onEditorMount}

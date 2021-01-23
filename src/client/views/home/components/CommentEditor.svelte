@@ -62,7 +62,7 @@
   });
 </script>
 
-<div class="comment-creator">
+<div class="comment-editor">
   <textarea
     on:keydown={handleSubmit}
     bind:value={content}
@@ -82,14 +82,14 @@
 </div>
 
 <style>
-  .comment-creator {
+  .comment-editor {
     font-size: 1rem;
     overflow: hidden;
     border: solid 1px;
     border-radius: 0.5em;
     flex-shrink: 0;
   }
-  .comment-creator textarea {
+  .comment-editor textarea {
     width: 100%;
     height: 3.25em;
     font-family: Arial, Helvetica, sans-serif;
@@ -99,7 +99,7 @@
     resize: none;
     display: block;
   }
-  .comment-creator textarea:focus {
+  .comment-editor textarea:focus {
     outline: none;
   }
 
