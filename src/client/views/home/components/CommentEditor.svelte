@@ -20,8 +20,9 @@
   export let content = '';
   export let onMount = undefined;
   export let onUnMount = undefined;
+  export let placeholderText = 'Enter text here';
   
-  function handleSubmit(ev) {
+  function handleKeyDown(ev) {
     switch(ev.keyCode) {
       case KEY__ENTER: {
         const handleComment = () => { content = ''; }
@@ -50,6 +51,21 @@
         }
         break;
       }
+      default: {
+        // TODO - https://medium.com/@romaric.mourgues/how-to-integrate-slack-like-markdown-into-your-instant-messaging-app-in-a-smart-and-performant-way-94b0ab613189
+        
+        // - *bold* (CMD/CTRL + B)
+        // - _italic_ (CMD/CTRL + I)
+        // - ~strikethrough~ (CMD/CTRL + X)
+        // - `inline code` (CMD/CTRL + C)
+        // - ```multiline code``` (OPT/ALT + SHIFT + C)
+        // - > block quote (SHIFT + 9)
+        // - - bulleted list (SHIFT + 8)
+        // - 1. ordered list (SHIFT + 7)
+        // - :grin: 😀
+        // - @romaricmourgues (quote user)
+        // - (SHIFT + U) = link
+      }
     }
   }
   
@@ -63,11 +79,29 @@
 </script>
 
 <div class="comment-editor">
-  <textarea
-    on:keydown={handleSubmit}
-    bind:value={content}
-    bind:this={inputEl}
-  ></textarea>
+  <div class="input-wrapper">
+    <div
+      aria-autocomplete="list"
+      aria-expanded="false"
+      aria-label={placeholderText}
+      aria-multiline="true"
+      class="input"
+      contenteditable="true"
+      dir="auto"
+      role="textbox"
+      spellcheck="true"
+      tabindex="0"
+      on:keydown={handleKeyDown}
+      bind:innerHTML={content}
+      bind:this={inputEl}
+    ></div>
+    <div
+      class="placeholder"
+      class:hidden={!!content}
+      aria-hidden="true"
+      role="presentation"
+    >{placeholderText}</div>
+  </div>
   <nav class="wysiwyg">
     <button title="Bold">B</button>
     <button title="Italic">I</button>
@@ -89,7 +123,11 @@
     border-radius: 0.5em;
     flex-shrink: 0;
   }
-  .comment-editor textarea {
+  
+  .input-wrapper {
+    position: relative;
+  }
+  .input {
     width: 100%;
     height: 3.25em;
     font-family: Arial, Helvetica, sans-serif;
@@ -97,10 +135,21 @@
     padding: 1em;
     border: none;
     resize: none;
-    display: block;
+    display: inline-block;
   }
-  .comment-editor textarea:focus {
+  .input:focus {
     outline: none;
+  }
+  .placeholder {
+    user-select: none;
+    pointer-events: none;
+    position: absolute;
+    top: 1em;
+    left: 1em;
+    opacity: 0.5;
+  }
+  .placeholder.hidden {
+    opacity: 0;
   }
 
   .wysiwyg {
