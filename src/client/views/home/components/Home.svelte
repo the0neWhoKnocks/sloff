@@ -56,7 +56,7 @@
       comments.set(parsedComments);
       
       await tick();
-      commentsEl.scrollTop = commentsEl.scrollHeight;
+      if (commentsEl) commentsEl.scrollTop = commentsEl.scrollHeight;
     });
     window.clientSocket.on(WS__MSG_TYPE__COMMENT_POSTED, async (comment) => {
       $comments.set(comment.cid, comment);
