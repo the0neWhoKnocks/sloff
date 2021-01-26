@@ -11,6 +11,11 @@
     WS__MSG_TYPE__UDPATE_COMMENT,
   } from '../../../../constants';
   import { comments, currUser } from '../../../store';
+  import {
+    compileToHTML,
+    compileToJSON,
+    compileToText,
+  } from '../../../utils/commentCompiler';
   
   const KEY__ENTER = 13;
   const KEY__UP = 38;
@@ -51,22 +56,28 @@
         }
         break;
       }
-      default: {
-        // TODO - https://medium.com/@romaric.mourgues/how-to-integrate-slack-like-markdown-into-your-instant-messaging-app-in-a-smart-and-performant-way-94b0ab613189
-        
-        // - *bold* (CMD/CTRL + B)
-        // - _italic_ (CMD/CTRL + I)
-        // - ~strikethrough~ (CMD/CTRL + X)
-        // - `inline code` (CMD/CTRL + C)
-        // - ```multiline code``` (OPT/ALT + SHIFT + C)
-        // - > block quote (SHIFT + 9)
-        // - - bulleted list (SHIFT + 8)
-        // - 1. ordered list (SHIFT + 7)
-        // - :grin: 😀
-        // - @romaricmourgues (quote user)
-        // - (SHIFT + U) = link
-      }
     }
+  }
+  
+  function handleKeyUp(ev) {
+    // TODO - https://medium.com/@romaric.mourgues/how-to-integrate-slack-like-markdown-into-your-instant-messaging-app-in-a-smart-and-performant-way-94b0ab613189
+    
+    // - *bold* (CMD/CTRL + B)
+    // - _italic_ (CMD/CTRL + I)
+    // - ~strikethrough~ (CMD/CTRL + X)
+    // - `inline code` (CMD/CTRL + C)
+    // - ```multiline code``` (OPT/ALT + SHIFT + C)
+    // - > block quote (SHIFT + 9)
+    // - - bulleted list (SHIFT + 8)
+    // - 1. ordered list (SHIFT + 7)
+    // - :grin: 😀
+    // - @romaricmourgues (quote user)
+    // - (SHIFT + U) = link
+    
+    const rawArr = compileToJSON(content);
+    const htmlArr = compileToHTML(rawArr);
+    
+    console.log(compileToText(htmlArr));
   }
   
   svelteOnMount(() => {
@@ -92,6 +103,7 @@
       spellcheck="true"
       tabindex="0"
       on:keydown={handleKeyDown}
+      on:keyup={handleKeyUp}
       bind:innerHTML={content}
       bind:this={inputEl}
     ></div>
